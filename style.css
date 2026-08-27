@@ -504,3 +504,31 @@ body {
   margin: 8px 0 0;
 }
 .empty-note[hidden] { display: none; }
+
+.header-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.header-tools {
+  display: flex;
+  gap: 2px;
+}
+.header-tools button {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  background: none;
+  border: 1px solid var(--dove);
+  color: var(--dove);
+  padding: 5px 9px;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+.header-tools button:hover {
+  border-color: var(--ink);
+  color: var(--ink);
+}

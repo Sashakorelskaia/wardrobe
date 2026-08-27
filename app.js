@@ -223,6 +223,112 @@ filtersEl.addEventListener("click", (e) => {
   render();
 });
 
+// ---- backup: export / import ----
+// The catalog lives only in this browser, so a file you can carry matters.
+
+async function blobToDataUrl(blob) {
+  return new Promise((resolve) => {
+    const r = new FileReader();
+    r.onload = () => resolve(r.result);
+    r.readAsDataURL(blob);
+  });
+}
+
+async function dataUrlToBlob(dataUrl) {
+  return (await fetch(dataUrl)).blob();
+}
+
+$("exportBtn").onclick = async () => {
+  if (!items.length) return;
+  progressEl.hidden = false;
+  progressLabel.textContent = "packing a backup…";
+  progressFill.style.width = "0%";
+
+  const payload = { version: 1, items: [] };
+  for (let i = 0; i < items.length; i++) {
+    const it = items[i];
+    payload.items.push({
+      id: it.id,
+      category: it.category,
+      edit: it.edit,
+      original: await blobToDataUrl(it.original),
+    });
+    progressFill.style.width = `${Math.round(((i + 1) / items.length) * 100)}%`;
+  }
+
+  const blob = new Blob([JSON.stringify(payload)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "wardrobe-export.json";
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 2000);
+
+  progressLabel.textContent = `saved — ${items.length} items`;
+  setTimeout(() => {
+    progressEl.hidden = true;
+    progressFill.style.width = "0%";
+  }, 2000);
+};
+
+$("importBtn").onclick = () => $("importInput").click();
+
+$("importInput").addEventListener("change", async (e) => {
+  const file = e.target.files[0];
+  e.target.value = "";
+  if (!file) return;
+
+  progressEl.hidden = false;
+  progressLabel.textContent = "reading the file…";
+  progressFill.style.width = "0%";
+
+  let payload;
+  try {
+    payload = JSON.parse(await file.text());
+  } catch {
+    progressLabel.textContent = "that file is not a wardrobe backup";
+    return;
+  }
+  if (!Array.isArray(payload.items)) {
+    progressLabel.textContent = "that file is not a wardrobe backup";
+    return;
+  }
+
+  const existing = new Set(items.map((it) => it.id));
+  let added = 0;
+
+  for (let i = 0; i < payload.items.length; i++) {
+    const rec = payload.items[i];
+    progressLabel.textContent = `importing ${i + 1} / ${payload.items.length}`;
+    progressFill.style.width = `${Math.round((i / payload.items.length) * 100)}%`;
+    try {
+      const original = await dataUrlToBlob(rec.original);
+      const canvas = await blobToCanvas(original);
+      const edit = { ...defaultEdit(), ...(rec.edit || {}) };
+      const item = {
+        id: existing.has(rec.id) ? newId() : rec.id,
+        category: rec.category ?? null,
+        edit,
+        original,
+        card: await canvasToBlob(renderCard(canvas, edit), "image/jpeg", 0.88),
+      };
+      await putItem(item);
+      items.push(item);
+      added++;
+      render();
+    } catch (err) {
+      console.error("import failed for", rec.id, err);
+    }
+  }
+
+  progressFill.style.width = "100%";
+  progressLabel.textContent = `imported — ${added} items`;
+  setTimeout(() => {
+    progressEl.hidden = true;
+    progressFill.style.width = "0%";
+  }, 2500);
+});
+
 // ---- lightbox: rotate, crop, levels, saturation ----
 
 const lightbox = $("lightbox");

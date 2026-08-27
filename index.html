@@ -14,7 +14,14 @@
     <h1 class="wordmark">wardrobe</h1>
     <div class="kicker">[personal catalog]</div>
   </div>
-  <div class="count" id="count">0 items</div>
+  <div class="header-right">
+    <div class="count" id="count">0 items</div>
+    <div class="header-tools">
+      <button id="exportBtn" title="save a backup file">export</button>
+      <button id="importBtn" title="load a backup file">import</button>
+      <input type="file" id="importInput" accept="application/json,.json" hidden>
+    </div>
+  </div>
 </header>
 
 <section class="dropzone" id="dropzone">
