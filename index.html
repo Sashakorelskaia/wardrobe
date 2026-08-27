@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>wardrobe</title>
 <meta name="description" content="Digitize your wardrobe. Photos in, clean catalog out. Runs entirely in your browser.">
-<link rel="stylesheet" href="style.css?v=1">
+<link rel="stylesheet" href="style.css?v=2">
 </head>
 <body>
 
@@ -47,10 +47,30 @@
 
 <main class="grid" id="grid"></main>
 
-<p class="empty-note" id="emptyNote">
-  Nothing here yet. Add a few photos — hanging, flat, against a plain wall all work.
-  Everything stays in this browser on this device.
-</p>
+<section class="empty-state" id="emptyState" hidden>
+  <div class="empty-how">
+    <h2>How it works</h2>
+    <ol>
+      <li>Photograph each garment against a plain wall — on a hanger or flat.</li>
+      <li>Drop the photos in. Backgrounds come off on your own device.</li>
+      <li>Tap a card to crop it square, straighten it, or correct the colour.</li>
+      <li>File each one under a category and filter the grid by it.</li>
+    </ol>
+    <p class="empty-privacy">
+      Nothing is uploaded. The catalogue stays in this browser — use export to keep
+      a backup or move it to another device.
+    </p>
+  </div>
+
+  <div class="example" id="example" hidden>
+    <div class="example-label">
+      <span>Example — someone else's wardrobe</span>
+      <button id="hideExample">hide</button>
+    </div>
+    <div class="grid example-grid" id="exampleGrid"></div>
+    <p class="example-note">This disappears as soon as you add your first garment.</p>
+  </div>
+</section>
 
 <div class="confirm-overlay" id="confirmOverlay" hidden>
   <div class="confirm-box">
@@ -117,6 +137,6 @@
   </div>
 </div>
 
-<script type="module" src="app.js?v=1"></script>
+<script type="module" src="app.js?v=2"></script>
 </body>
 </html>

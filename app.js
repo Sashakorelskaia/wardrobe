@@ -34,7 +34,43 @@ const fileInput = $("fileInput");
 const progressEl = $("progress");
 const progressLabel = $("progressLabel");
 const progressFill = $("progressFill");
-const emptyNote = $("emptyNote");
+const emptyState = $("emptyState");
+const exampleEl = $("example");
+const exampleGrid = $("exampleGrid");
+
+// The example is never stored. It is shown on an empty catalogue and dropped
+// from memory the moment a real garment exists, so there is nothing to clean up.
+let exampleLoaded = false;
+let exampleDismissed = false;
+
+async function showExample() {
+  if (exampleLoaded || exampleDismissed) return;
+  exampleLoaded = true;
+  try {
+    const res = await fetch("demo.json");
+    if (!res.ok) return;
+    const payload = await res.json();
+    exampleGrid.innerHTML = "";
+    for (const rec of payload.items) {
+      const blob = await dataUrlToBlob(rec.original);
+      const canvas = await blobToCanvas(blob);
+      const edit = { ...defaultEdit(), ...(rec.edit || {}) };
+      const card = await canvasToBlob(renderCard(canvas, edit), "image/jpeg", 0.85);
+      exampleGrid.appendChild(
+        renderCard_({ id: rec.id, category: rec.category, card, edit }, { readOnly: true })
+      );
+    }
+    if (!items.length && !exampleDismissed) exampleEl.hidden = false;
+  } catch (err) {
+    console.error("example failed to load", err);
+  }
+}
+
+$("hideExample").onclick = () => {
+  exampleDismissed = true;
+  exampleEl.hidden = true;
+  exampleGrid.innerHTML = "";
+};
 
 // ---- rendering ----
 
@@ -57,10 +93,18 @@ function render() {
 
   grid.innerHTML = "";
   for (const item of visible) grid.appendChild(renderCard_(item));
-  emptyNote.hidden = items.length > 0;
+
+  const empty = items.length === 0;
+  emptyState.hidden = !empty;
+  if (empty) {
+    showExample();
+  } else if (!exampleEl.hidden) {
+    exampleEl.hidden = true;
+    exampleGrid.innerHTML = "";
+  }
 }
 
-function renderCard_(item) {
+function renderCard_(item, { readOnly = false } = {}) {
   const card = document.createElement("div");
   card.className = "card" + (item.category ? "" : " unsorted");
 
@@ -68,19 +112,21 @@ function renderCard_(item) {
   img.className = "card-image";
   img.src = cardUrl(item);
   img.alt = "";
-  img.onclick = () => openLightbox(item.id);
+  if (!readOnly) img.onclick = () => openLightbox(item.id);
   card.appendChild(img);
 
-  const del = document.createElement("button");
-  del.className = "card-delete";
-  del.textContent = "×";
-  del.title = "delete";
-  del.setAttribute("aria-label", "delete");
-  del.onclick = (e) => {
-    e.stopPropagation();
-    askDelete(item.id);
-  };
-  card.appendChild(del);
+  if (!readOnly) {
+    const del = document.createElement("button");
+    del.className = "card-delete";
+    del.textContent = "×";
+    del.title = "delete";
+    del.setAttribute("aria-label", "delete");
+    del.onclick = (e) => {
+      e.stopPropagation();
+      askDelete(item.id);
+    };
+    card.appendChild(del);
+  }
 
   const cats = document.createElement("div");
   cats.className = "card-cats";
@@ -88,7 +134,11 @@ function renderCard_(item) {
     const btn = document.createElement("button");
     btn.className = "card-cat" + (item.category === c.key ? " selected" : "");
     btn.textContent = c.label;
-    btn.onclick = () => setCategory(item.id, item.category === c.key ? null : c.key);
+    if (!readOnly) {
+      btn.onclick = () => setCategory(item.id, item.category === c.key ? null : c.key);
+    } else {
+      btn.disabled = true;
+    }
     cats.appendChild(btn);
   }
   card.appendChild(cats);

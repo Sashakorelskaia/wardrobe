@@ -496,14 +496,82 @@ body {
   }
 }
 
-.empty-note {
+/* Empty state: instructions, plus an example that vanishes on first real item. */
+.empty-state[hidden] { display: none; }
+
+.empty-how {
+  max-width: 52ch;
+  margin: 8px 0 40px;
+}
+.empty-how h2 {
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--dove);
+  font-weight: 400;
+  margin: 0 0 12px;
+}
+.empty-how ol {
+  margin: 0 0 16px;
+  padding-left: 18px;
+}
+.empty-how li {
+  font-size: 11px;
+  line-height: 1.9;
+  color: var(--ink);
+}
+.empty-privacy {
   font-size: 11px;
   line-height: 1.7;
   color: var(--dove);
-  max-width: 46ch;
-  margin: 8px 0 0;
+  margin: 0;
 }
-.empty-note[hidden] { display: none; }
+
+.example[hidden] { display: none; }
+
+.example-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--dove);
+  margin-bottom: 12px;
+}
+.example-label button {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  background: none;
+  border: 1px solid var(--dove);
+  color: var(--dove);
+  padding: 4px 8px;
+  cursor: pointer;
+}
+.example-label button:hover {
+  border-color: var(--ink);
+  color: var(--ink);
+}
+
+/* Read-only: the example is a picture of a catalogue, not a catalogue. */
+.example-grid {
+  opacity: 0.75;
+  pointer-events: none;
+}
+.example-grid .card-cat {
+  cursor: default;
+}
+
+.example-note {
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--dove);
+  margin: 12px 0 0;
+}
 
 .header-right {
   display: flex;
