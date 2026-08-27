@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>wardrobe</title>
+<meta name="description" content="Digitize your wardrobe. Photos in, clean catalog out. Runs entirely in your browser.">
+<link rel="stylesheet" href="style.css?v=1">
+</head>
+<body>
+
+<header class="header">
+  <div>
+    <h1 class="wordmark">wardrobe</h1>
+    <div class="kicker">[personal catalog]</div>
+  </div>
+  <div class="count" id="count">0 items</div>
+</header>
+
+<section class="dropzone" id="dropzone">
+  <input type="file" id="fileInput" multiple accept="image/*" hidden>
+  <div class="dropzone-label">drop photos here — or tap to browse</div>
+  <div class="dropzone-sub" id="dropzoneSub">background is removed on your device — nothing is uploaded</div>
+</section>
+
+<div class="progress" id="progress" hidden>
+  <div class="progress-label" id="progressLabel"></div>
+  <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+</div>
+
+<nav class="filters" id="filters">
+  <button class="filter active" data-filter="all">all</button>
+  <button class="filter" data-filter="top">top</button>
+  <button class="filter" data-filter="bottom">bottom</button>
+  <button class="filter" data-filter="full">full</button>
+  <button class="filter" data-filter="outerwear">outerwear</button>
+  <button class="filter" data-filter="shoes">shoes</button>
+  <button class="filter" data-filter="unsorted">unsorted</button>
+</nav>
+
+<main class="grid" id="grid"></main>
+
+<p class="empty-note" id="emptyNote">
+  Nothing here yet. Add a few photos — hanging, flat, against a plain wall all work.
+  Everything stays in this browser on this device.
+</p>
+
+<div class="confirm-overlay" id="confirmOverlay" hidden>
+  <div class="confirm-box">
+    <div class="confirm-text" id="confirmText">delete this item?</div>
+    <div class="confirm-actions">
+      <button id="confirmCancel">cancel</button>
+      <button id="confirmOk" class="danger">delete</button>
+    </div>
+  </div>
+</div>
+
+<div class="lightbox" id="lightbox" hidden>
+  <div class="lightbox-top">
+    <div class="lightbox-tools">
+      <button id="rotateRight" title="rotate">↻ rotate</button>
+      <button id="clearCrop">clear crop</button>
+      <button id="downloadBtn">download</button>
+    </div>
+    <button id="lightboxClose">close ×</button>
+  </div>
+
+  <div class="lightbox-stage" id="lightboxStage">
+    <img id="lightboxImg" class="lightbox-img" draggable="false" alt="">
+    <div class="crop-mask" id="maskTop"></div>
+    <div class="crop-mask" id="maskBottom"></div>
+    <div class="crop-mask" id="maskLeft"></div>
+    <div class="crop-mask" id="maskRight"></div>
+    <div class="crop-box" id="cropBox" hidden>
+      <div class="crop-handle" data-corner="nw"></div>
+      <div class="crop-handle" data-corner="ne"></div>
+      <div class="crop-handle" data-corner="sw"></div>
+      <div class="crop-handle" data-corner="se"></div>
+    </div>
+  </div>
+  <div class="lightbox-hint">drag to draw a square crop — drag a corner to resize, drag inside to move</div>
+
+  <div class="lightbox-sliders">
+    <label>
+      <span>black point</span>
+      <input type="range" id="sBlack" min="0" max="255" value="0">
+      <span class="v" id="vBlack">0</span>
+    </label>
+    <label>
+      <span>white point</span>
+      <input type="range" id="sWhite" min="0" max="255" value="255">
+      <span class="v" id="vWhite">255</span>
+    </label>
+    <label>
+      <span>midtone</span>
+      <input type="range" id="sGamma" min="20" max="300" value="100">
+      <span class="v" id="vGamma">1.00</span>
+    </label>
+    <label>
+      <span>saturation</span>
+      <input type="range" id="sSat" min="0" max="200" value="100">
+      <span class="v" id="vSat">1.00</span>
+    </label>
+  </div>
+
+  <div class="lightbox-actions">
+    <button id="lightboxReset">reset</button>
+    <button id="lightboxCancel">cancel</button>
+    <button id="lightboxSave" class="primary">save</button>
+  </div>
+</div>
+
+<script type="module" src="app.js?v=1"></script>
+</body>
+</html>
