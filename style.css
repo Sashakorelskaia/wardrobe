@@ -1,4 +1,6 @@
-@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@700&display=swap');
+/* Archivo at its widest stands in for Söhne Breit — the licensed original
+   cannot ship in a public repo, and the wide grotesque is the point. */
+@import url('https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,700..900&family=IBM+Plex+Mono:wght@400;600&display=swap');
 
 :root {
   --ink: #001117;
@@ -27,9 +29,11 @@ body {
 }
 
 .wordmark {
-  font-family: "IBM Plex Sans", system-ui, sans-serif;
-  font-weight: 700;
+  font-family: "Archivo", system-ui, sans-serif;
+  font-variation-settings: "wdth" 108;
+  font-weight: 900;
   font-size: 28px;
+  letter-spacing: -0.01em;
   margin: 0;
   text-transform: lowercase;
 }
