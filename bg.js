@@ -32,9 +32,12 @@ export function init(onProgress) {
     const webgpu = await hasWebGPU();
     backend = webgpu ? "webgpu" : "wasm";
 
+    // Quantized: 42 MB instead of 167, and low enough on memory that a phone
+    // browser does not kill the tab mid-run. Edge quality barely differs on
+    // garment silhouettes, which is all this has to cut.
     const model = await AutoModel.from_pretrained(MODEL_ID, {
       config: { model_type: "custom" },
-      dtype: "fp32",
+      dtype: "q8",
       device: backend,
       progress_callback: onProgress,
     });

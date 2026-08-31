@@ -3,6 +3,7 @@ import { init as initModel, removeBackground, backendName } from "./bg.js";
 import {
   defaultEdit,
   fileToCanvas,
+  releaseCanvas,
   trimToAlpha,
   renderCard,
   rotate90,
@@ -204,6 +205,7 @@ async function addFiles(fileList) {
   progressEl.hidden = false;
   progressFill.style.width = "0%";
   progressLabel.textContent = "preparing…";
+  const failed = [];
 
   try {
     await ensureModel();
@@ -216,18 +218,23 @@ async function addFiles(fileList) {
   for (let i = 0; i < files.length; i++) {
     progressLabel.textContent = `processing ${i + 1} / ${files.length} — ${files[i].name}`;
     progressFill.style.width = `${Math.round((i / files.length) * 100)}%`;
+    let photo, cut, original, card;
     try {
-      const photo = await fileToCanvas(files[i]);
-      const cut = await removeBackground(photo);
-      const original = trimToAlpha(cut);
+      photo = await fileToCanvas(files[i]);
+      cut = await removeBackground(photo);
+      releaseCanvas(photo);
+      original = trimToAlpha(cut);
+      releaseCanvas(cut);
+
       const edit = defaultEdit();
-      const card = renderCard(original, edit);
+      card = renderCard(original, edit);
 
       const item = {
         id: newId(),
         category: null,
         edit,
-        original: await canvasToBlob(original, "image/png"),
+        // WebP keeps the cutout a few hundred KB instead of several MB
+        original: await canvasToBlob(original, "image/webp", 0.9),
         card: await canvasToBlob(card, "image/jpeg", 0.88),
       };
       await putItem(item);
@@ -235,15 +242,26 @@ async function addFiles(fileList) {
       render();
     } catch (err) {
       console.error("failed on", files[i].name, err);
+      failed.push(files[i].name);
+    } finally {
+      releaseCanvas(photo);
+      releaseCanvas(cut);
+      releaseCanvas(original);
+      releaseCanvas(card);
     }
     progressFill.style.width = `${Math.round(((i + 1) / files.length) * 100)}%`;
   }
 
-  progressLabel.textContent = `done — ${files.length} processed`;
+  if (failed.length) {
+    progressLabel.textContent =
+      `${files.length - failed.length} of ${files.length} added — ${failed.length} failed, try one photo at a time`;
+  } else {
+    progressLabel.textContent = `done — ${files.length} processed`;
+  }
   setTimeout(() => {
     progressEl.hidden = true;
     progressFill.style.width = "0%";
-  }, 2000);
+  }, failed.length ? 6000 : 2000);
 }
 
 dropzone.addEventListener("click", () => fileInput.click());

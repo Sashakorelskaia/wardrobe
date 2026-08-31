@@ -138,12 +138,27 @@ export async function blobToCanvas(blob) {
   return c;
 }
 
+/** A phone browser gets killed for using too much memory, so it works smaller. */
+export function inputMaxSide() {
+  const mem = navigator.deviceMemory || 0; // absent on Safari
+  const smallScreen = Math.min(screen.width, screen.height) <= 500;
+  if (smallScreen || (mem && mem <= 4)) return 1400;
+  return 2000;
+}
+
 /** Downscale a huge phone photo before the model sees it — keeps memory sane. */
-export async function fileToCanvas(file, maxSide = 2000) {
+export async function fileToCanvas(file, maxSide = inputMaxSide()) {
   const bitmap = await createImageBitmap(file);
   const scale = Math.min(1, maxSide / Math.max(bitmap.width, bitmap.height));
   const c = canvasOf(Math.round(bitmap.width * scale), Math.round(bitmap.height * scale));
   c.getContext("2d").drawImage(bitmap, 0, 0, c.width, c.height);
   bitmap.close();
   return c;
+}
+
+/** Canvases hold their pixels until collected; on a phone that matters. */
+export function releaseCanvas(canvas) {
+  if (!canvas) return;
+  canvas.width = 0;
+  canvas.height = 0;
 }
