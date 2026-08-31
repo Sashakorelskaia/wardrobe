@@ -189,7 +189,10 @@ async function ensureModel() {
   await initModel((p) => {
     if (p.status === "progress" && p.file?.endsWith(".onnx")) {
       const pct = Math.round(p.progress || 0);
-      progressLabel.textContent = `first run — loading the model, ${pct}%`;
+      const mb = p.total ? Math.round(p.total / 1048576) : null;
+      progressLabel.textContent = mb
+        ? `first run — loading the model, ${pct}% of ${mb} MB`
+        : `first run — loading the model, ${pct}%`;
       progressFill.style.width = `${pct}%`;
       announced = true;
     } else if (!announced) {

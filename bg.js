@@ -29,15 +29,23 @@ export function init(onProgress) {
   if (ready) return ready;
 
   ready = (async () => {
-    const webgpu = await hasWebGPU();
+    // Two different limits, so two different builds of the same model.
+    //
+    // Desktop with a GPU: fp16, 84 MB, runs on the graphics card in about a
+    // second. Quantized weights cannot run there and would fall back to the
+    // slow path, so they are not used when a GPU is available.
+    //
+    // Phone: memory is the binding constraint — full weights are 167 MB and
+    // iOS kills the tab before they finish loading. Quantized is 42 MB and
+    // survives, on the CPU path, slower but finishing.
+    const smallScreen = Math.min(screen.width, screen.height) <= 500;
+    const webgpu = !smallScreen && (await hasWebGPU());
     backend = webgpu ? "webgpu" : "wasm";
+    const dtype = webgpu ? "fp16" : "q8";
 
-    // Quantized: 42 MB instead of 167, and low enough on memory that a phone
-    // browser does not kill the tab mid-run. Edge quality barely differs on
-    // garment silhouettes, which is all this has to cut.
     const model = await AutoModel.from_pretrained(MODEL_ID, {
       config: { model_type: "custom" },
-      dtype: "q8",
+      dtype,
       device: backend,
       progress_callback: onProgress,
     });
