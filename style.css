@@ -341,16 +341,17 @@ body {
 
 .crop-handle {
   position: absolute;
+  z-index: 2;
   width: 12px;
   height: 12px;
   background: var(--paper);
   border: 1px solid var(--ink);
   transform: translate(-50%, -50%);
 }
-.crop-handle[data-corner="nw"] { top: 0; left: 0; cursor: nwse-resize; }
-.crop-handle[data-corner="ne"] { top: 0; left: 100%; cursor: nesw-resize; }
-.crop-handle[data-corner="sw"] { top: 100%; left: 0; cursor: nesw-resize; }
-.crop-handle[data-corner="se"] { top: 100%; left: 100%; cursor: nwse-resize; }
+.crop-handle[data-grip="nw"] { top: 0; left: 0; cursor: nwse-resize; }
+.crop-handle[data-grip="ne"] { top: 0; left: 100%; cursor: nesw-resize; }
+.crop-handle[data-grip="sw"] { top: 100%; left: 0; cursor: nesw-resize; }
+.crop-handle[data-grip="se"] { top: 100%; left: 100%; cursor: nwse-resize; }
 
 .lightbox-hint {
   font-size: 10px;
@@ -599,4 +600,20 @@ body {
 .header-tools button:hover {
   border-color: var(--ink);
   color: var(--ink);
+}
+
+/* Edges, so width and height can be pulled independently. */
+.crop-edge {
+  position: absolute;
+  background: transparent;
+}
+.crop-edge[data-grip="n"] { top: 0; left: 0; right: 0; height: 14px; transform: translateY(-50%); cursor: ns-resize; }
+.crop-edge[data-grip="s"] { top: 100%; left: 0; right: 0; height: 14px; transform: translateY(-50%); cursor: ns-resize; }
+.crop-edge[data-grip="w"] { left: 0; top: 0; bottom: 0; width: 14px; transform: translateX(-50%); cursor: ew-resize; }
+.crop-edge[data-grip="e"] { left: 100%; top: 0; bottom: 0; width: 14px; transform: translateX(-50%); cursor: ew-resize; }
+
+@media (hover: none) {
+  .crop-handle { width: 20px; height: 20px; }
+  .crop-edge[data-grip="n"], .crop-edge[data-grip="s"] { height: 26px; }
+  .crop-edge[data-grip="w"], .crop-edge[data-grip="e"] { width: 26px; }
 }

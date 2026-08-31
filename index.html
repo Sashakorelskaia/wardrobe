@@ -16,7 +16,7 @@
 <meta name="apple-mobile-web-app-title" content="wardrobe">
 <link rel="apple-touch-icon" href="icon-180.png">
 
-<link rel="stylesheet" href="style.css?v=7">
+<link rel="stylesheet" href="style.css?v=8">
 </head>
 <body>
 
@@ -64,7 +64,7 @@
     <ol>
       <li>Photograph each garment against a plain wall — on a hanger or flat.</li>
       <li>Drop the photos in. Backgrounds come off on your own device.</li>
-      <li>Tap a card to crop it square, straighten it, or correct the colour.</li>
+      <li>Tap a card to crop it, straighten it, or correct the colour.</li>
       <li>File each one under a category and filter the grid by it.</li>
     </ol>
     <p class="empty-privacy">
@@ -110,13 +110,17 @@
     <div class="crop-mask" id="maskLeft"></div>
     <div class="crop-mask" id="maskRight"></div>
     <div class="crop-box" id="cropBox" hidden>
-      <div class="crop-handle" data-corner="nw"></div>
-      <div class="crop-handle" data-corner="ne"></div>
-      <div class="crop-handle" data-corner="sw"></div>
-      <div class="crop-handle" data-corner="se"></div>
+      <div class="crop-handle" data-grip="nw"></div>
+      <div class="crop-handle" data-grip="ne"></div>
+      <div class="crop-handle" data-grip="sw"></div>
+      <div class="crop-handle" data-grip="se"></div>
+      <div class="crop-edge" data-grip="n"></div>
+      <div class="crop-edge" data-grip="s"></div>
+      <div class="crop-edge" data-grip="w"></div>
+      <div class="crop-edge" data-grip="e"></div>
     </div>
   </div>
-  <div class="lightbox-hint">drag to draw a square crop — drag a corner to resize, drag inside to move</div>
+  <div class="lightbox-hint">drag the edges to set width and height — drag inside to move the frame</div>
 
   <div class="lightbox-sliders">
     <label>
@@ -148,6 +152,6 @@
   </div>
 </div>
 
-<script type="module" src="app.js?v=7"></script>
+<script type="module" src="app.js?v=8"></script>
 </body>
 </html>

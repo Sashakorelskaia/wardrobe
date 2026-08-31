@@ -1,5 +1,5 @@
-import { allItems, putItem, getItem, deleteItem, newId } from "./store.js?v=7";
-import { init as initModel, removeBackground, backendName } from "./bg.js?v=7";
+import { allItems, putItem, getItem, deleteItem, newId } from "./store.js?v=8";
+import { init as initModel, removeBackground, backendName } from "./bg.js?v=8";
 import {
   defaultEdit,
   fileToCanvas,
@@ -11,7 +11,7 @@ import {
   cloneCanvas,
   canvasToBlob,
   blobToCanvas,
-} from "./imaging.js?v=7";
+} from "./imaging.js?v=8";
 
 const CATS = [
   { key: "top", label: "top" },
@@ -460,7 +460,7 @@ async function openLightbox(id) {
   if (!item) return;
   currentId = id;
   currentOriginal = await blobToCanvas(item.original);
-  cropNorm = item.edit?.crop || null;
+  cropNorm = item.edit?.crop || FULL_FRAME();
   setSliders(item.edit || defaultEdit());
   lightbox.hidden = false;
   await refreshPreview();
@@ -511,11 +511,11 @@ Object.values(sliders).forEach((s) =>
 $("lightboxClose").onclick = closeLightbox;
 $("lightboxCancel").onclick = closeLightbox;
 $("clearCrop").onclick = () => {
-  cropNorm = null;
+  cropNorm = FULL_FRAME();
   drawCrop();
 };
 $("lightboxReset").onclick = async () => {
-  cropNorm = null;
+  cropNorm = FULL_FRAME();
   setSliders(defaultEdit());
   await refreshPreview();
 };
@@ -547,7 +547,7 @@ $("downloadBtn").onclick = async () => {
 $("lightboxSave").onclick = async () => {
   const item = items.find((it) => it.id === currentId);
   if (!item) return;
-  item.edit = { ...editValues(), crop: cropNorm };
+  item.edit = { ...editValues(), crop: isFullFrame(cropNorm) ? null : cropNorm };
   item.card = await canvasToBlob(renderCard(currentOriginal, item.edit), "image/jpeg", 0.88);
   await putItem(item);
   closeLightbox();
@@ -569,34 +569,10 @@ function pointToNorm(clientX, clientY) {
 }
 
 /**
- * Grow a square from a fixed anchor, clamped so it never leaves the photo.
- * Coordinates are normalised 0–1, but the square must be square in *pixels* —
- * so the side is measured in pixels and converted back per axis.
+ * A box between two corners, any proportion. The card ends up square either
+ * way — the cutout is fitted into a white square — so forcing a square crop
+ * only got in the way of tall garments shot in portrait.
  */
-function squareBox(anchor, point) {
-  const r = imgRect();
-  const W = r.width || 1;
-  const H = r.height || 1;
-
-  const dxPx = (point.x - anchor.x) * W;
-  const dyPx = (point.y - anchor.y) * H;
-  const sx = dxPx >= 0 ? 1 : -1;
-  const sy = dyPx >= 0 ? 1 : -1;
-
-  const availX = (sx > 0 ? 1 - anchor.x : anchor.x) * W;
-  const availY = (sy > 0 ? 1 - anchor.y : anchor.y) * H;
-  const sidePx = Math.min(Math.max(Math.abs(dxPx), Math.abs(dyPx)), availX, availY);
-
-  const cx = anchor.x + (sx * sidePx) / W;
-  const cy = anchor.y + (sy * sidePx) / H;
-  return {
-    x0: Math.min(anchor.x, cx),
-    y0: Math.min(anchor.y, cy),
-    x1: Math.max(anchor.x, cx),
-    y1: Math.max(anchor.y, cy),
-  };
-}
-
 function drawCrop() {
   const r = imgRect();
   if (!r.width || !cropNorm) {
@@ -628,69 +604,73 @@ function drawCrop() {
   });
   Object.assign(masks.bottom.style, {
     left: `${offX}px`, top: `${offY + top + h}px`, width: `${r.width}px`,
-    height: `${r.height - top - h}px`,
+    height: `${Math.max(0, r.height - top - h)}px`,
   });
   Object.assign(masks.left.style, {
     left: `${offX}px`, top: `${offY + top}px`, width: `${left}px`, height: `${h}px`,
   });
   Object.assign(masks.right.style, {
     left: `${offX + left + w}px`, top: `${offY + top}px`,
-    width: `${r.width - left - w}px`, height: `${h}px`,
+    width: `${Math.max(0, r.width - left - w)}px`, height: `${h}px`,
   });
 }
 
-function insideCrop(n) {
-  return cropNorm && n.x >= cropNorm.x0 && n.x <= cropNorm.x1 && n.y >= cropNorm.y0 && n.y <= cropNorm.y1;
-}
+const FULL_FRAME = () => ({ x0: 0, y0: 0, x1: 1, y1: 1 });
+const isFullFrame = (c) =>
+  !c || (c.x0 < 0.005 && c.y0 < 0.005 && c.x1 > 0.995 && c.y1 > 0.995);
+const MIN = 0.05; // рамка не схлопывается в точку
 
-const OPPOSITE = {
-  nw: (c) => ({ x: c.x1, y: c.y1 }),
-  ne: (c) => ({ x: c.x0, y: c.y1 }),
-  sw: (c) => ({ x: c.x1, y: c.y0 }),
-  se: (c) => ({ x: c.x0, y: c.y0 }),
+/** Which side each grip moves. */
+const GRIPS = {
+  nw: ["x0", "y0"], ne: ["x1", "y0"], sw: ["x0", "y1"], se: ["x1", "y1"],
+  n: ["y0"], s: ["y1"], w: ["x0"], e: ["x1"],
 };
 
-cropBox.querySelectorAll(".crop-handle").forEach((handle) =>
-  handle.addEventListener("pointerdown", (e) => {
+let activeGrip = null;
+let cropAtStart = null;
+
+cropBox.querySelectorAll("[data-grip]").forEach((el) =>
+  el.addEventListener("pointerdown", (e) => {
     e.stopPropagation();
+    e.preventDefault();
+    activeGrip = el.dataset.grip;
     dragMode = "resize";
-    resizeAnchor = OPPOSITE[handle.dataset.corner](cropNorm);
     lightboxStage.setPointerCapture(e.pointerId);
   })
 );
 
 lightboxStage.addEventListener("pointerdown", (e) => {
   const n = pointToNorm(e.clientX, e.clientY);
-  if (insideCrop(n)) {
-    dragMode = "move";
-    moveStart = n;
-    cropAtMoveStart = { ...cropNorm };
-  } else {
-    dragMode = "draw";
-    dragStart = n;
-    cropNorm = squareBox(n, n);
-  }
+  dragMode = "move";
+  moveStart = n;
+  cropAtStart = { ...cropNorm };
   lightboxStage.setPointerCapture(e.pointerId);
 });
 
 lightboxStage.addEventListener("pointermove", (e) => {
-  if (!dragMode) return;
+  if (!dragMode || !cropNorm) return;
   const n = pointToNorm(e.clientX, e.clientY);
-  if (dragMode === "draw") cropNorm = squareBox(dragStart, n);
-  else if (dragMode === "resize") cropNorm = squareBox(resizeAnchor, n);
-  else {
-    const sideX = cropAtMoveStart.x1 - cropAtMoveStart.x0;
-    const sideY = cropAtMoveStart.y1 - cropAtMoveStart.y0;
-    const x0 = Math.min(1 - sideX, Math.max(0, cropAtMoveStart.x0 + n.x - moveStart.x));
-    const y0 = Math.min(1 - sideY, Math.max(0, cropAtMoveStart.y0 + n.y - moveStart.y));
-    cropNorm = { x0, y0, x1: x0 + sideX, y1: y0 + sideY };
+
+  if (dragMode === "resize") {
+    const next = { ...cropNorm };
+    for (const side of GRIPS[activeGrip]) {
+      next[side] = side[0] === "x" ? n.x : n.y;
+    }
+    // не давать сторонам пройти друг сквозь друга
+    if (next.x1 - next.x0 >= MIN && next.y1 - next.y0 >= MIN) cropNorm = next;
+  } else {
+    const w = cropAtStart.x1 - cropAtStart.x0;
+    const h = cropAtStart.y1 - cropAtStart.y0;
+    const x0 = Math.min(1 - w, Math.max(0, cropAtStart.x0 + n.x - moveStart.x));
+    const y0 = Math.min(1 - h, Math.max(0, cropAtStart.y0 + n.y - moveStart.y));
+    cropNorm = { x0, y0, x1: x0 + w, y1: y0 + h };
   }
   drawCrop();
 });
 
 lightboxStage.addEventListener("pointerup", () => {
-  if (dragMode === "draw" && cropNorm && cropNorm.x1 - cropNorm.x0 < 0.02) cropNorm = null;
   dragMode = null;
+  activeGrip = null;
   drawCrop();
 });
 
