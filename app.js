@@ -1,5 +1,5 @@
-import { allItems, putItem, getItem, deleteItem, newId } from "./store.js?v=5";
-import { init as initModel, removeBackground, backendName } from "./bg.js?v=5";
+import { allItems, putItem, getItem, deleteItem, newId } from "./store.js?v=6";
+import { init as initModel, removeBackground, backendName } from "./bg.js?v=6";
 import {
   defaultEdit,
   fileToCanvas,
@@ -11,7 +11,7 @@ import {
   cloneCanvas,
   canvasToBlob,
   blobToCanvas,
-} from "./imaging.js?v=5";
+} from "./imaging.js?v=6";
 
 const CATS = [
   { key: "top", label: "top" },
@@ -209,14 +209,18 @@ async function addFiles(fileList) {
   progressFill.style.width = "0%";
   progressLabel.textContent = "preparing…";
   const failed = [];
+  let lastError = "";
 
   try {
     await ensureModel();
   } catch (err) {
-    progressLabel.textContent = "could not load the model — check the connection and reload";
+    progressLabel.textContent =
+      `could not load the model — ${String(err && err.message ? err.message : err).slice(0, 100)}`;
     console.error(err);
     return;
   }
+  dropzoneSub.textContent =
+    `running on ${backendName()} — nothing is uploaded`;
 
   for (let i = 0; i < files.length; i++) {
     progressLabel.textContent = `processing ${i + 1} / ${files.length} — ${files[i].name}`;
@@ -246,6 +250,7 @@ async function addFiles(fileList) {
     } catch (err) {
       console.error("failed on", files[i].name, err);
       failed.push(files[i].name);
+      lastError = String(err && err.message ? err.message : err).slice(0, 120);
     } finally {
       releaseCanvas(photo);
       releaseCanvas(cut);
@@ -256,8 +261,9 @@ async function addFiles(fileList) {
   }
 
   if (failed.length) {
-    progressLabel.textContent =
-      `${files.length - failed.length} of ${files.length} added — ${failed.length} failed, try one photo at a time`;
+    progressLabel.textContent = lastError
+      ? `${files.length - failed.length} of ${files.length} added — failed: ${lastError}`
+      : `${files.length - failed.length} of ${files.length} added — ${failed.length} failed, try one photo at a time`;
   } else {
     progressLabel.textContent = `done — ${files.length} processed`;
   }

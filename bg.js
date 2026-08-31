@@ -51,6 +51,11 @@ export function init(onProgress) {
     });
 
     // RMBG-1.4 ships no preprocessor config, so it is spelled out here.
+    // Inference cost scales with the square of this size: 768 uses roughly
+    // half the memory of 1024, which is the difference between finishing and
+    // having the tab killed on a phone. A garment silhouette survives it.
+    const side = smallScreen ? 768 : 1024;
+
     const processor = await AutoProcessor.from_pretrained(MODEL_ID, {
       config: {
         do_normalize: true,
@@ -62,7 +67,7 @@ export function init(onProgress) {
         feature_extractor_type: "ImageFeatureExtractor",
         resample: 2,
         rescale_factor: 1 / 255,
-        size: { width: 1024, height: 1024 },
+        size: { width: side, height: side },
       },
     });
 
