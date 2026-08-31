@@ -77,6 +77,86 @@ export function init(onProgress) {
   return ready;
 }
 
+
+/**
+ * The quantized model misclassifies scattered pixels, which show up as white
+ * specks on a dark garment and stray crumbs of background around it. Two cheap
+ * passes fix what a bigger model would not have produced in the first place.
+ */
+
+/** Median of each 3×3 neighbourhood: removes lone specks, keeps edges sharp. */
+function medianFilter(data, w, h) {
+  const out = new Uint8Array(data.length);
+  const win = new Uint8Array(9);
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      let n = 0;
+      for (let dy = -1; dy <= 1; dy++) {
+        const yy = y + dy;
+        if (yy < 0 || yy >= h) continue;
+        for (let dx = -1; dx <= 1; dx++) {
+          const xx = x + dx;
+          if (xx < 0 || xx >= w) continue;
+          win[n++] = data[yy * w + xx];
+        }
+      }
+      const slice = win.subarray(0, n);
+      slice.sort();
+      out[y * w + x] = slice[n >> 1];
+    }
+  }
+  return out;
+}
+
+/**
+ * Drop islands smaller than `minFraction` of the frame — both floating scraps
+ * of background and pinholes punched through the garment.
+ */
+function removeSmallIslands(data, w, h, minFraction = 0.0015) {
+  const minSize = Math.max(24, Math.round(w * h * minFraction));
+  const seen = new Uint8Array(data.length);
+  const stack = new Int32Array(data.length);
+  const region = new Int32Array(data.length);
+
+  for (let start = 0; start < data.length; start++) {
+    if (seen[start]) continue;
+    const solid = data[start] > 127;
+    let top = 0, count = 0;
+    stack[top++] = start;
+    seen[start] = 1;
+
+    while (top > 0) {
+      const i = stack[--top];
+      region[count++] = i;
+      const x = i % w, y = (i / w) | 0;
+      const neighbours = [
+        x > 0 ? i - 1 : -1,
+        x < w - 1 ? i + 1 : -1,
+        y > 0 ? i - w : -1,
+        y < h - 1 ? i + w : -1,
+      ];
+      for (const j of neighbours) {
+        if (j < 0 || seen[j]) continue;
+        if (data[j] > 127 === solid) {
+          seen[j] = 1;
+          stack[top++] = j;
+        }
+      }
+    }
+
+    if (count < minSize) {
+      const flip = solid ? 0 : 255;
+      for (let k = 0; k < count; k++) data[region[k]] = flip;
+    }
+  }
+  return data;
+}
+
+export function cleanMask(mask, w, h) {
+  const filtered = medianFilter(mask, w, h);
+  return removeSmallIslands(filtered, w, h);
+}
+
 export function backendName() {
   return backend;
 }
@@ -96,6 +176,7 @@ export async function removeBackground(sourceCanvas) {
     sourceCanvas.width,
     sourceCanvas.height
   );
+  const cleaned = cleanMask(mask.data, sourceCanvas.width, sourceCanvas.height);
 
   const out = document.createElement("canvas");
   out.width = sourceCanvas.width;
@@ -104,8 +185,8 @@ export async function removeBackground(sourceCanvas) {
   ctx.drawImage(sourceCanvas, 0, 0);
 
   const img = ctx.getImageData(0, 0, out.width, out.height);
-  for (let i = 0; i < mask.data.length; i++) {
-    img.data[i * 4 + 3] = mask.data[i];
+  for (let i = 0; i < cleaned.length; i++) {
+    img.data[i * 4 + 3] = cleaned[i];
   }
   ctx.putImageData(img, 0, 0);
   return out;

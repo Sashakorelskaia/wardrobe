@@ -1,5 +1,5 @@
-import { allItems, putItem, getItem, deleteItem, newId } from "./store.js?v=9";
-import { init as initModel, removeBackground, backendName } from "./bg.js?v=9";
+import { allItems, putItem, getItem, deleteItem, newId } from "./store.js?v=10";
+import { init as initModel, removeBackground, backendName } from "./bg.js?v=10";
 import {
   defaultEdit,
   fileToCanvas,
@@ -11,7 +11,7 @@ import {
   cloneCanvas,
   canvasToBlob,
   blobToCanvas,
-} from "./imaging.js?v=9";
+} from "./imaging.js?v=10";
 
 const CATS = [
   { key: "top", label: "top" },
@@ -423,6 +423,7 @@ const readouts = { black: $("vBlack"), white: $("vWhite"), gamma: $("vGamma"), s
 
 let currentId = null;
 let currentOriginal = null; // canvas
+let previewSource = null;   // downscaled copy: the sliders redraw this, not the full frame
 let cropNorm = null;
 let dragMode = null;
 let dragStart = null;
@@ -460,6 +461,7 @@ async function openLightbox(id) {
   if (!item) return;
   currentId = id;
   currentOriginal = await blobToCanvas(item.original);
+  previewSource = downscaleForPreview(currentOriginal);
   cropNorm = item.edit?.crop || FULL_FRAME();
   setSliders(item.edit || defaultEdit());
   lightbox.hidden = false;
@@ -471,6 +473,8 @@ function closeLightbox() {
   lightbox.hidden = true;
   currentId = null;
   currentOriginal = null;
+  releaseCanvas(previewSource);
+  previewSource = null;
   if (previewUrl) {
     URL.revokeObjectURL(previewUrl);
     previewUrl = null;
@@ -478,9 +482,22 @@ function closeLightbox() {
 }
 
 /** Live preview shows the whole frame with tone applied; the crop box is drawn over it. */
+/** Sliders redraw on every move, so they redraw something small. */
+function downscaleForPreview(canvas, maxSide = 900) {
+  const scale = Math.min(1, maxSide / Math.max(canvas.width, canvas.height));
+  if (scale === 1) return cloneCanvas(canvas);
+  const out = document.createElement("canvas");
+  out.width = Math.round(canvas.width * scale);
+  out.height = Math.round(canvas.height * scale);
+  const ctx = out.getContext("2d");
+  ctx.imageSmoothingQuality = "high";
+  ctx.drawImage(canvas, 0, 0, out.width, out.height);
+  return out;
+}
+
 async function refreshPreview() {
-  if (!currentOriginal) return;
-  const c = applyToneAndColor(cloneCanvas(currentOriginal), editValues());
+  if (!previewSource) return;
+  const c = applyToneAndColor(cloneCanvas(previewSource), editValues());
   const flat = document.createElement("canvas");
   flat.width = c.width;
   flat.height = c.height;
@@ -523,6 +540,8 @@ $("lightboxReset").onclick = async () => {
 $("rotateRight").onclick = async () => {
   if (!currentOriginal) return;
   currentOriginal = rotate90(currentOriginal);
+  releaseCanvas(previewSource);
+  previewSource = downscaleForPreview(currentOriginal);
   cropNorm = null; // crop was in the old orientation
   const item = items.find((it) => it.id === currentId);
   item.original = await canvasToBlob(currentOriginal, "image/png");
@@ -684,7 +703,7 @@ window.addEventListener("resize", () => {
 // own copy of the page indefinitely. So the running build states its version
 // and compares it with the server's, rather than leaving a stale copy silent.
 
-const APP_VERSION = 9;
+const APP_VERSION = 10;
 
 async function checkForUpdate() {
   try {
