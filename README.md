@@ -39,8 +39,11 @@ need a real origin.
 
 ## Notes and limits
 
-- **First run downloads ~44 MB** (the model), then it is cached by the browser.
-- **WebGPU makes it fast.** Without it, it falls back to WebAssembly and runs slower.
+- **The model downloads once** — 84 MB on a machine with a GPU, 42 MB on a phone —
+  then the browser caches it.
+- **Two builds of the same model.** With a GPU it runs fp16 weights on the graphics
+  card, about 5 seconds a garment. Without one it runs quantized weights on the CPU:
+  slower, but it fits in the memory a phone browser allows before killing the tab.
 - **Data is per-browser.** The catalog does not sync between a phone and a laptop; each keeps its own.
   Clearing site data clears the catalog.
 - **HEIC**: iPhones convert to JPEG when you pick a photo, so this works on a phone. Desktop browsers
