@@ -1,0 +1,21 @@
+# Stale files were the single most expensive bug in this project: Safari kept
+# serving an old build for days while the server had the fix. So the code is
+# told to revalidate every time, and only the things that never change are
+# allowed to sit in the cache.
+
+<IfModule mod_headers.c>
+  # Always check with the server before reusing these. They are small, and a
+  # revalidation that returns "not modified" costs almost nothing.
+  <FilesMatch "\.(html|js|css|json|webmanifest)$">
+    Header set Cache-Control "no-cache, must-revalidate"
+  </FilesMatch>
+
+  # Icons are versioned by name, so they can be kept for a year.
+  <FilesMatch "\.(png|jpg|jpeg|webp|svg)$">
+    Header set Cache-Control "public, max-age=31536000, immutable"
+  </FilesMatch>
+</IfModule>
+
+<IfModule mod_mime.c>
+  AddType application/manifest+json .webmanifest
+</IfModule>

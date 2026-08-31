@@ -1,5 +1,5 @@
-import { allItems, putItem, getItem, deleteItem, newId } from "./store.js?v=6";
-import { init as initModel, removeBackground, backendName } from "./bg.js?v=6";
+import { allItems, putItem, getItem, deleteItem, newId } from "./store.js?v=7";
+import { init as initModel, removeBackground, backendName } from "./bg.js?v=7";
 import {
   defaultEdit,
   fileToCanvas,
@@ -11,7 +11,7 @@ import {
   cloneCanvas,
   canvasToBlob,
   blobToCanvas,
-} from "./imaging.js?v=6";
+} from "./imaging.js?v=7";
 
 const CATS = [
   { key: "top", label: "top" },

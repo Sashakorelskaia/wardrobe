@@ -5,7 +5,18 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>wardrobe</title>
 <meta name="description" content="Digitize your wardrobe. Photos in, clean catalog out. Runs entirely in your browser.">
-<link rel="stylesheet" href="style.css?v=6">
+
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#F0F1EC">
+<link rel="icon" href="icon-192.png" type="image/png">
+
+<!-- iOS ignores the manifest for home-screen installs and reads these instead. -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="wardrobe">
+<link rel="apple-touch-icon" href="icon-180.png">
+
+<link rel="stylesheet" href="style.css?v=7">
 </head>
 <body>
 
@@ -137,6 +148,6 @@
   </div>
 </div>
 
-<script type="module" src="app.js?v=6"></script>
+<script type="module" src="app.js?v=7"></script>
 </body>
 </html>
