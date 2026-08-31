@@ -3,6 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Cache-Control" content="no-cache, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
 <title>wardrobe</title>
 <meta name="description" content="Digitize your wardrobe. Photos in, clean catalog out. Runs entirely in your browser.">
 
@@ -16,7 +18,7 @@
 <meta name="apple-mobile-web-app-title" content="wardrobe">
 <link rel="apple-touch-icon" href="icon-180.png">
 
-<link rel="stylesheet" href="style.css?v=8">
+<link rel="stylesheet" href="style.css?v=9">
 </head>
 <body>
 
@@ -40,6 +42,11 @@
   <div class="dropzone-label">drop photos here — or tap to browse</div>
   <div class="dropzone-sub" id="dropzoneSub">background is removed on your device — nothing is uploaded</div>
 </section>
+
+<div class="update-bar" id="updateBar" hidden>
+  <span>A newer version is available.</span>
+  <button id="updateNow">reload</button>
+</div>
 
 <div class="progress" id="progress" hidden>
   <div class="progress-label" id="progressLabel"></div>
@@ -152,6 +159,6 @@
   </div>
 </div>
 
-<script type="module" src="app.js?v=8"></script>
+<script type="module" src="app.js?v=9"></script>
 </body>
 </html>

@@ -617,3 +617,31 @@ body {
   .crop-edge[data-grip="n"], .crop-edge[data-grip="s"] { height: 26px; }
   .crop-edge[data-grip="w"], .crop-edge[data-grip="e"] { width: 26px; }
 }
+
+/* The host does not send cache headers, so the app checks its own version
+   and says so — a stale home-screen copy is otherwise invisible. */
+.update-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: var(--ink);
+  color: var(--paper);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 10px 14px;
+  margin-bottom: 16px;
+}
+.update-bar[hidden] { display: none; }
+.update-bar button {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  background: var(--paper);
+  color: var(--ink);
+  border: none;
+  padding: 7px 12px;
+  cursor: pointer;
+}

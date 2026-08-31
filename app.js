@@ -1,5 +1,5 @@
-import { allItems, putItem, getItem, deleteItem, newId } from "./store.js?v=8";
-import { init as initModel, removeBackground, backendName } from "./bg.js?v=8";
+import { allItems, putItem, getItem, deleteItem, newId } from "./store.js?v=9";
+import { init as initModel, removeBackground, backendName } from "./bg.js?v=9";
 import {
   defaultEdit,
   fileToCanvas,
@@ -11,7 +11,7 @@ import {
   cloneCanvas,
   canvasToBlob,
   blobToCanvas,
-} from "./imaging.js?v=8";
+} from "./imaging.js?v=9";
 
 const CATS = [
   { key: "top", label: "top" },
@@ -678,11 +678,36 @@ window.addEventListener("resize", () => {
   if (!lightbox.hidden) drawCrop();
 });
 
+
+// ---- staleness check ----
+// The host sends no cache headers, and an installed home-screen app keeps its
+// own copy of the page indefinitely. So the running build states its version
+// and compares it with the server's, rather than leaving a stale copy silent.
+
+const APP_VERSION = 9;
+
+async function checkForUpdate() {
+  try {
+    const res = await fetch(`version.json?t=${Date.now()}`, { cache: "no-store" });
+    if (!res.ok) return;
+    const { v } = await res.json();
+    if (typeof v === "number" && v > APP_VERSION) $("updateBar").hidden = false;
+  } catch {
+    // offline is fine; nothing to report
+  }
+}
+
+$("updateNow").onclick = () => {
+  // a fresh query string is the one thing a cached page cannot satisfy
+  location.replace(`${location.pathname}?u=${Date.now()}`);
+};
+
 // ---- start ----
 
 (async () => {
   items = await allItems();
   render();
+  checkForUpdate();
   if (!(navigator.gpu)) {
     dropzoneSub.textContent =
       "background is removed on your device — nothing is uploaded (slower without WebGPU)";
